@@ -17,6 +17,7 @@ Chisel is a DSL embedded in Scala. However, it is still a distinct language, and
 * [Naming] (#naming)
 * [Bundles] (#bundles)
 * [Ready/Valid Interfaces] (#ready-valid-interfaces)
+* [Imports] (#imports)
 * [Comments] (#comments)
 * [Assertions] (#assertions)
 * [Best Practices] (#best-practices)
@@ -75,6 +76,12 @@ A valid signal may often be a late arriving signal. Try to avoid using valid sig
 
 A valid signal **should not** depend on the ready signal (unless you really know what you are doing). This hurts the critical path and can create combinational loops if both sides get coupled. 
 
+##Imports
+
+Try to avoid wildcard imports. They make code more obfuscated and fragile.
+
+    import rocket.{UseFPU, XLen}
+    import cde.{Parameters, Field}
 
 ##Comments
 
