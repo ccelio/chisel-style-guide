@@ -32,20 +32,37 @@ Follow the indent level of the existing code.
 
 Consider breaking off Conditional I/O fields into a separate Bundles  (FreeListRollbackIO and FreeListSingleCycleIO).
 
+## Literals
+
+Be careful of using Scala Ints to describe Chisel literals. `0xffffffff` is a 32-bit signed integer with value -1, and thus will throw an error when used as `UInt(0xffffffff, 32)`. Instead, use Strings to describe large literals:
+
+    UInt("hffffffff", 32)
+
 ## Naming
 
 Variable names should tend to be descriptive and not overly abbreviated. The smaller the scope (and the more used it is), the more abbreviated the name can be.
 
 Bundles used for I/Os should be named SomethingIO. IO comes last. The name is Camel-cased. Example: (FreeListIO).
 
-Any variable that is used for debugging purposes should be named “debug_*” (i.e., things that you ideally will not synthesize).
+Any variable that is used for debugging purposes should be begin with the prefix `debug_` (i.e., things that you ideally would not synthesize).
 
 Constants/parameters should be named in all caps, demonstrating their global nature. While most things in Scala are immutable, Chisel isn’t Scala.
 
-Constants and should be put in a companion object.
+Constants should be all uppercase and should be put in a companion object:
 
-    object Configuration {
-      val NUM_ROB_ENTRIES = 32
+    object ALU 
+    {
+      val SZ_ALU_FN = 4
+      FN_ADD = UInt(0, SZ_ALU_FN)
+      ...
+    }
+
+Or trait:
+
+    trait RISCVConstants
+    {
+       val RD_MSB  = 11
+       val RD_LSB  = 7
     }
 
 ##Ready-Valid Interfaces
