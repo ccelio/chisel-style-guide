@@ -15,8 +15,8 @@ Chisel is a DSL embedded in Scala. However, it is still a distinct language, and
 
 * [Spacing] (#spacing)
 * [Naming] (#naming)
-* [Literals] (#literals)
 * [Bundles] (#bundles)
+* [Literals] (#literals)
 * [Ready/Valid Interfaces] (#ready-valid-interfaces)
 * [Imports] (#imports)
 * [Comments] (#comments)
@@ -29,16 +29,6 @@ Spaces, not tabs. Never tabs.
 
 Follow the indent level of the existing code.
 
-
-## Bundles
-
-Consider breaking off Conditional I/O fields into a separate Bundles  (FreeListRollbackIO and FreeListSingleCycleIO).
-
-## Literals
-
-Be careful of using Scala Ints to describe Chisel literals. `0xffffffff` is a 32-bit signed integer with value -1, and thus will throw an error when used as `UInt(0xffffffff, 32)`. Instead, use Strings to describe large literals:
-
-    UInt("hffffffff", 32)
 
 ## Naming
 
@@ -67,6 +57,16 @@ Or trait:
        val RD_LSB  = 7
     }
 
+## Bundles
+
+Consider breaking off Conditional I/O fields into a separate Bundles  (FreeListRollbackIO and FreeListSingleCycleIO).
+
+## Literals
+
+Be careful of using Scala Ints to describe Chisel literals. `0xffffffff` is a 32-bit signed integer with value -1, and thus will throw an error when used as `UInt(0xffffffff, 32)`. Instead, use Strings to describe large literals:
+
+    UInt("hffffffff", 32)
+
 ##Ready-Valid Interfaces
 
 A ready signal denotes a resource is available/is ready to be utilized.
@@ -90,19 +90,19 @@ Consider commenting the use of the I/O fields (especially if there are unintuiti
 
     class CpuReq extends Bundle
     {
-         val addr = UInt(width = ...)
-         val cmd  = Bits(width = ...)
-         val data = Bits(width = ...) // is sent the cycle after the request is valid
+        val addr = UInt(width = ...)
+        val cmd  = Bits(width = ...)
+        val data = Bits(width = ...) // is sent the cycle after the request is valid
 
 If it required cleverness to write, you should probably describe **why** it does what it does. The reader is never as smart as the writer. Especially when it’s yourself.
 
 ##Assertions
 
-If you solve a bug, strongly contemplate what assert() could have caught this bug and then add it.
+If you solve a bug, strongly contemplate what `assert()` could have caught this bug and then add it.
 
-If you are using a one-hot encoding, guard it with asserts! Especially calls to OHToUInt. 
+If you are using a one-hot encoding, guard it with asserts! Especially calls to `OHToUInt`. 
 
-    (assert(PopCount(updates_oh) <= UInt(1), "[MyModuleName] ...")
+    assert(PopCount(updates_oh) <= UInt(1), "[MyModuleName] ...")
 
 
 ##Best Practices
