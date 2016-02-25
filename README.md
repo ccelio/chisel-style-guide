@@ -15,6 +15,7 @@ Chisel is a DSL embedded in Scala. However, it is still a distinct language, and
 
 * [Spacing] (#spacing)
 * [Naming] (#naming)
+* [Literals] (#literals)
 * [Bundles] (#bundles)
 * [Ready/Valid Interfaces] (#ready-valid-interfaces)
 * [Imports] (#imports)
