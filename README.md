@@ -5,7 +5,7 @@ A Style Guide for the [Chisel Hardware Construction Language](https://chisel.eec
 
 ## Overall goal
 
-code is meant to be read, not written. You will spend more time searching for bugs, adding features to existing code bases, and trying to learn what other people have done, than you will writing your own code from scratch.  Code should strive to be easy to understand and easy to maintain.
+Code is meant to be read, not written. You will spend more time searching for bugs, adding features to existing code bases, and trying to learn what other people have done, than you will writing your own code from scratch.  Code should strive to be easy to understand and easy to maintain.
 
 ## Prelude
 
@@ -86,7 +86,13 @@ Try to avoid wildcard imports. They make code more obfuscated and fragile.
 
 ##Comments
 
-Consider commenting the use of the I/O fields (especially if there are unintuitive and/or multi-cycle timings!). Chisel I/Os aren’t functions - it isn’t obvious how to interface with a Module to other programmers.
+Consider commenting the use of the I/O fields (especially if there are unintuitive timings!). Chisel I/Os aren’t functions - it isn’t obvious how to interface with a Module to other programmers.
+
+    class CpuReq extends Bundle
+    {
+         val addr = UInt(width = ...)
+         val cmd  = Bits(width = ...)
+         val data = Bits(width = ...) // is sent the cycle after the request is valid
 
 If it required cleverness to write, you should probably describe **why** it does what it does. The reader is never as smart as the writer. Especially when it’s yourself.
 
