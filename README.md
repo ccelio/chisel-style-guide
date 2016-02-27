@@ -18,6 +18,7 @@ Chisel is a DSL embedded in Scala. However, it is still a distinct language, and
 * [Bundles] (#bundles)
 * [Literals] (#literals)
 * [Ready/Valid Interfaces] (#ready-valid-interfaces)
+* [Vector of Modules] (#vector-of-modules)
 * [Imports] (#imports)
 * [Comments] (#comments)
 * [Assertions] (#assertions)
@@ -76,6 +77,35 @@ A valid signal denotes something is valid and *can* commit a state update (it *w
 A valid signal may often be a late arriving signal. Try to avoid using valid signals to drive datapath logic, and instead use valid signals to gate off state updates.
 
 A valid signal **should not** depend on the ready signal (unless you really know what you are doing). This hurts the critical path and can create combinational loops if both sides get coupled. 
+
+##Vector of Modules
+
+###ArrayBuffer
+
+An ArrayBuffer should be used to describe a vector of Modules.
+
+    val exe_units = ArrayBuffer[ExecutionUnit]()
+    val my_args = Seq(1,2,3,4)
+    for (i <- 0 until num_units)
+    {
+       exe_units += Module(new AluExeUnit(my_args(i)))
+    }
+
+One of the advantages is that you can provide different input parameters to each constructor (the above toy example shows different elements of `my_args` being provided to each `AluExeUnit`).
+
+The disadvantage is you cannot index the ArrayBuffer using Chisel nodes (aka, you can not dynamically index the ArrayBuffer during hardware execution).
+
+###Vec
+
+If you need to index the vector of Modules using a Chisel node use the following structure:
+
+    val table = Vec.fill(num_elements) {Module(new TableElement()).io}
+     
+    val idx = Wire(UInt())
+    table(idx).wen := Bool(true) // indexed by a Chisel node!
+
+Note that `table` is actually a `Vec` of `TableElement` `I/O` bundles. 
+
 
 ##Imports
 
