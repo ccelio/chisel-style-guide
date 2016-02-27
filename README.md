@@ -19,6 +19,7 @@ Chisel is a DSL embedded in Scala. However, it is still a distinct language, and
 * [Literals] (#literals)
 * [Ready/Valid Interfaces] (#ready-valid-interfaces)
 * [Vector of Modules] (#vector-of-modules)
+* [Val versus Var] (#val-versus-var)
 * [Imports] (#imports)
 * [Comments] (#comments)
 * [Assertions] (#assertions)
@@ -106,6 +107,103 @@ If you need to index the vector of Modules using a Chisel node use the following
 
 Note that `table` is actually a `Vec` of `TableElement` `I/O` bundles. 
 
+
+## Val versus Var
+
+Only use `val`, unless you are an experienced Chisel programmer. Even then, only use `var` in constrained situations (try to abstract it within a function). The use of the `var` can make it difficult to reason about your design.
+
+For context, a bit more background is needed. A hardware design described in Chisel is quite literally a Scala program that, when executed, generates a hardware graph composed of Chisel Nodes that is then passed to a back-end which generates a cycle-exact replica in either C++ or Verilog (or whatever other formats supported by the backend).  
+
+Thus, `val` and `var` denote Scala variables (well more exactly, `val` is an immutable value and `var` is a mutable variable). 
+
+    val my_node = Wire(UInt())
+
+This is a Scala value called `my_node`, which points to a Chisel Node in the hardware graph that is a `Wire` of type `UInt`. The `my_node` value can only ever point to this particular Chisel Node in the graph.
+
+    var node_ptr = Wire(UInt())
+
+Uh oh. The Scala variable `node_ptr` is pointing to a Chisel node in the graph, but it can later be changed to point to a new Chisel node!
+
+````Scala
+    var node_ptr = io.a
+    node_ptr := Bool(true)
+    node_ptr = io.b
+    node_ptr := Bool(false)
+````
+
+In the above (scary!) code, 
+* `node_ptr` first points to `io.a`, 
+* then uses the Chisel assignment operator `:=` to set `io.a` to `Bool(true)`
+* `node_ptr` is then changed to point to `io.b`
+* and finally, `io.b` is set to `Bool(false)`!
+
+We get the following Verilog output:
+
+````Verilog
+module Hello(         
+    output io_a,      
+    output io_b       
+);                    
+                      
+  assign io_b = 1'h0; 
+  assign io_a = 1'h1; 
+endmodule             
+````
+
+Using `var` can make it difficult to reason about the circuit. **And be CAREFUL when mixing `=` and `:=`**! The `=` is a Scala assignment, and sets a `var` variable to point to a new Node in the graph. Meanwhile, `:=` is a Chisel assignment and performs a new assignment *to* the Chisel Node. This distrinction is important! For example, Chisel conditional `when` statements are for conditionally assigning values to Chisel Nodes - **the scala `=` operator is invisible to `when` statements!!**
+
+````Scala
+    var my_node = io.a
+    my_node := Bool(true) // this sets io.a to "true"
+    my_node = Bool(true)  // this sets the Scala variable my_node to point to a Chisel node that is a literal true
+````
+
+Consider the incorrect code below, which tries to mix `when`, `var`, and `=` to perform an OR reduction:
+
+````Scala
+   val my_bits = Wire(Bits(width=n))
+   var temp = Bool(false)
+   for (i <- 0 until n)
+   {
+      when (my_bits(i))
+      {
+         temp = Bool(true) // wrong! always returns true.
+         temp := Bool(true) // compiler error!
+      }
+   }
+````
+
+For the first statement `temp = Bool(true)`, the Scala variable `temp` points to the Chisel node `Bool(true)`, ignoring the when() statement.
+
+For the second statement `temp := Bool(true)`, a Chisel compiler error is thrown because, because the code is trying to reassign the node `Bool(false)` to be `Bool(true)`, which is nonsensical. 
+
+**Conclusion: don't mix `when` and `var`'s!**
+
+For completness sake, the proper code for an OR reduction would be `my_bits.orR` (and no need to use var or when!). 
+
+###Valid uses of Vars
+
+There are a few valid uses of var. One would be to generate cascading logic. For example, this locking arbiter from ChiselUtil:
+
+````Scala
+var choose = UInt(n-1)                         
+for (i <- n-2 to 0 by -1) {                    
+  choose = Mux(io.in(i).valid, UInt(i), choose)
+}                                              
+chosen := Mux(locked, lockIdx, choose)         
+````
+
+After each iteration of the Scala `for` loop, `choose` is pointing to a new node in the cascading Mux tree.
+
+Another use is forward declaring Modules that are conditionally instantiated later.
+
+````scala
+var fpu: FPUUnit = null                   
+if (has_fpu)                                              
+{                                                         
+   fpu = Module(new FPUUnit()) 
+   ...
+````
 
 ##Imports
 
