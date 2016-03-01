@@ -7,6 +7,8 @@ A Style Guide for the [Chisel Hardware Construction Language](https://chisel.eec
 
 Code is meant to be read, not written. You will spend more time searching for bugs, adding features to existing code bases, and trying to learn what other people have done, than you will writing your own code from scratch.  Code should strive to be easy to understand and easy to maintain.
 
+As style can be such a deeply personal preference, and as Chisel continues to evolve, this guide will eschew making hard edicts on DOs and DONTs. Instead, this guide will strive to provide guidance to newcomers to Chisel through a discussion on best practices.
+
 ## Prelude
 
 Chisel is a DSL embedded in Scala. However, it is still a distinct language, and so it may not follow all of Scala's conventions.
@@ -20,10 +22,11 @@ Chisel is a DSL embedded in Scala. However, it is still a distinct language, and
 * [Ready/Valid Interfaces] (#ready-valid-interfaces)
 * [Vector of Modules] (#vector-of-modules)
 * [Val versus Var] (#val-versus-var)
+* [Private versus Public] (#private-versus-public)
 * [Imports] (#imports)
 * [Comments] (#comments)
 * [Assertions] (#assertions)
-* [Best Practices] (#best-practices)
+* [Best Practices] (#additiona-best-practices)
  
 ## Spacing
 
@@ -44,22 +47,59 @@ Constants/parameters should be named in all caps, demonstrating their global nat
 
 Constants should be all uppercase and should be put in a companion object:
 
+````scala
     object ALU 
     {
       val SZ_ALU_FN = 4
       FN_ADD = UInt(0, SZ_ALU_FN)
       ...
     }
+````
 
-Or trait:
+Or trait (if you want a Module or Bundle to extend the trait):
 
+````scala
     trait RISCVConstants
     {
        val RD_MSB  = 11
        val RD_LSB  = 7
     }
+````
 
 ## Bundles
+
+Consider providing `def` functions in your Bundles. It provides a clearer level of intention to the user of how to interact with the Bundle.
+
+````scala
+// simplified example of the DecoupledIO
+class DecoupledIO extends Bundle                 
+{                                                                    
+  val ready = Bool(INPUT)                                            
+  val valid = Bool(OUTPUT)                                           
+  def fire(dummy: Int = 0): Bool = ready && valid     
+  ....
+````
+
+
+Or
+
+````scala
+class TLBIO extends VMUBundle 
+{                           
+  val req = Decoupled(new rocket.TLBReq)                  
+  val resp = new rocket.TLBRespNoHitIndex().flip          
+                                                          
+  def query(vpn: UInt, store: Bool): Bool = 
+  {             
+    this.req.bits.vpn := vpn                              
+    this.req.bits.asid := UInt(0)                         
+    this.req.bits.passthrough := Bool(false)              
+    this.req.bits.instruction := Bool(false)              
+    this.req.bits.store := store                          
+                                                          
+    this.req.ready && !this.resp.miss                     
+  }                                                       
+````
 
 Consider breaking off Conditional I/O fields into a separate Bundles  (FreeListRollbackIO and FreeListSingleCycleIO).
 
@@ -75,7 +115,7 @@ A ready signal denotes a resource is available/is ready to be utilized.
 
 A valid signal denotes something is valid and *can* commit a state update (it *will* commit a state update if the corresponding ready signal is high).
 
-A valid signal may often be a late arriving signal. Try to avoid using valid signals to drive datapath logic, and instead use valid signals to gate off state updates.
+**Performance tip:** a valid signal may often be a late arriving signal. Try to avoid using valid signals to drive datapath logic, and instead use valid signals to gate off state updates.
 
 A valid signal **should not** depend on the ready signal (unless you really know what you are doing). This hurts the critical path and can create combinational loops if both sides get coupled. 
 
@@ -85,12 +125,14 @@ A valid signal **should not** depend on the ready signal (unless you really know
 
 An ArrayBuffer should be used to describe a vector of Modules.
 
+````scala
     val exe_units = ArrayBuffer[ExecutionUnit]()
     val my_args = Seq(1,2,3,4)
     for (i <- 0 until num_units)
     {
        exe_units += Module(new AluExeUnit(my_args(i)))
     }
+````
 
 One of the advantages is that you can provide different input parameters to each constructor (the above toy example shows different elements of `my_args` being provided to each `AluExeUnit`).
 
@@ -100,10 +142,12 @@ The disadvantage is you cannot index the ArrayBuffer using Chisel nodes (aka, yo
 
 If you need to index the vector of Modules using a Chisel node use the following structure:
 
+````scala
     val table = Vec.fill(num_elements) {Module(new TableElement()).io}
      
     val idx = Wire(UInt())
     table(idx).wen := Bool(true) // indexed by a Chisel node!
+````
 
 Note that `table` is actually a `Vec` of `TableElement` `I/O` bundles. 
 
@@ -116,11 +160,15 @@ For context, a bit more background is needed. A hardware design described in Chi
 
 Thus, `val` and `var` denote Scala variables (well more exactly, `val` is an immutable value and `var` is a mutable variable). 
 
+````scala
     val my_node = Wire(UInt())
+````
 
 This is a Scala value called `my_node`, which points to a Chisel Node in the hardware graph that is a `Wire` of type `UInt`. The `my_node` value can only ever point to this particular Chisel Node in the graph.
 
+````scala
     var node_ptr = Wire(UInt())
+````
 
 Uh oh. The Scala variable `node_ptr` is pointing to a Chisel node in the graph, but it can later be changed to point to a new Chisel node!
 
@@ -212,6 +260,10 @@ Try to avoid wildcard imports. They make code more obfuscated and fragile.
     import rocket.{UseFPU, XLen}
     import cde.{Parameters, Field}
 
+##Private versus Public
+
+By default, all `val`s and `def`s are public in Scala. Label all `def`s private if the scope is meant to stay internal to the current object. This makes intention clearer.
+
 ##Comments
 
 Consider commenting the use of the I/O fields (especially if there are unintuitive timings!). Chisel I/Os aren’t functions - it isn’t obvious how to interface with a Module to other programmers.
@@ -232,10 +284,11 @@ If you are using a one-hot encoding, guard it with asserts! Especially calls to 
 
     assert(PopCount(updates_oh) <= UInt(1), "[MyModuleName] ...")
 
+Note which Module the assert resides in when authoring the failure string.
 
-##Best Practices
+##Additional Best Practices
 
-If you ever write `+N`, ask yourself if the number will ever be `NonPow2`.
+If you ever write `+N`, ask yourself if the number will ever be `NonPow2`. For example, wrap-around logic will be needed to guard incrementing pointers to queues with `NonPow` number of elements. Just like in software, overflows and array bounds overruns are scary!
 
 **Avoid use of `var`**, as chisel lacks the defenses to safeguard its correct usage (Chisel nodes pointed to by `var` are invisible to `when()` statements). If you do use `var`, try to abstract it into a function/object. If you don’t understand why `var` and `when()` don’t mix, then for the love of god AVOID `var`.
 
