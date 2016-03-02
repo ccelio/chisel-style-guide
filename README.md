@@ -26,7 +26,7 @@ Chisel is a DSL embedded in Scala. However, it is still a distinct language, and
 * [Imports] (#imports)
 * [Comments] (#comments)
 * [Assertions] (#assertions)
-* [Best Practices] (#additiona-best-practices)
+* [Additional Best Practices] (#additional-best-practices)
  
 ## Spacing
 
@@ -71,7 +71,7 @@ Or trait (if you want a Module or Bundle to extend the trait):
 Consider providing `def` functions in your Bundles. It provides a clearer level of intention to the user of how to interact with the Bundle.
 
 ````scala
-// simplified example of the DecoupledIO
+// simplified example
 class DecoupledIO extends Bundle                 
 {                                                                    
   val ready = Bool(INPUT)                                            
@@ -79,9 +79,9 @@ class DecoupledIO extends Bundle
   def fire(dummy: Int = 0): Bool = ready && valid     
   ....
 ````
+Users of the DecoupledIO can now do something like `when(io.deq.fire())`!
 
-
-Or
+Or this example, which performs a `query` against a TLB address translation structure:
 
 ````scala
 class TLBIO extends VMUBundle 
