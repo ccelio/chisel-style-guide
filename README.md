@@ -30,6 +30,7 @@ Feedback requested!
 * [Imports] (#imports)
 * [Comments] (#comments)
 * [Assertions] (#assertions)
+* [Requires] (#requires)
 * [Additional Best Practices] (#additional-best-practices)
  
 ## Spacing
@@ -261,8 +262,22 @@ if (has_fpu)
 
 Try to avoid wildcard imports. They make code more obfuscated and fragile.
 
+````scala
     import rocket.{UseFPU, XLen}
     import cde.{Parameters, Field}
+````
+
+AVOID using `import` statements for bringing in new Module and Bundle definitions. Instead, explicitly invoke the namespace when instantiating the Module or Bundle. It makes the origin of the object clear.
+
+````scala
+//bad
+import rocket._
+...
+val tlb = Module(new TLB())
+
+//good
+val tlb = Module(new rocket.TLB())
+````
 
 ##Private versus Public
 
@@ -289,6 +304,16 @@ If you are using a one-hot encoding, guard it with asserts! Especially calls to 
     assert(PopCount(updates_oh) <= UInt(1), "[MyModuleName] ...")
 
 Note which Module the assert resides in when authoring the failure string.
+
+## Requires
+
+Scala provides a `require()` function that will throw a Scala run-time error when compiling your Chisel hardware if the condition is not met.
+
+Use `require()` statements to guard against unsupported parameter values in your hardware generators.
+
+Use `require()` statements to codify your assumptions in your code (e.g., `require(isPow2(num_entries))` for logic that only works when `num_entries` is a power of 2).
+
+
 
 ##Additional Best Practices
 
