@@ -198,7 +198,7 @@ module Hello(
 endmodule             
 ````
 
-Using `var` can make it difficult to reason about the circuit. **And be CAREFUL when mixing `=` and `:=`**! The `=` is a Scala assignment, and sets a `var` variable to point to a new Node in the graph. Meanwhile, `:=` is a Chisel assignment and performs a new assignment *to* the Chisel Node. This distrinction is important! For example, Chisel conditional `when` statements are for conditionally assigning values to Chisel Nodes - **the scala `=` operator is invisible to `when` statements!!**
+Using `var` can make it difficult to reason about the circuit. **And be CAREFUL when mixing `=` and `:=`**! The `=` is a Scala assignment, and sets a `var` variable to point to a new Node in the graph. Meanwhile, `:=` is a Chisel assignment and performs a new assignment *to* the Chisel Node. This distinction is important! For example, Chisel conditional `when` statements are for conditionally assigning values to Chisel Nodes - **the scala `=` operator is invisible to `when` statements!!**
 
 ````Scala
     var my_node = io.a
@@ -223,7 +223,7 @@ Consider the incorrect code below, which tries to mix `when`, `var`, and `=` to 
 
 For the first statement `temp = Bool(true)`, the Scala variable `temp` points to the Chisel node `Bool(true)`, ignoring the when() statement.
 
-For the second statement `temp := Bool(true)`, a Chisel compiler error is thrown because, because the code is trying to reassign the node `Bool(false)` to be `Bool(true)`, which is nonsensical. 
+For the second statement `temp := Bool(true)`, a Chisel compiler error is thrown because the code is trying to reassign the node `Bool(false)` to be `Bool(true)`, which is nonsensical. 
 
 **Conclusion: don't mix `when` and `var`'s!**
 
@@ -288,9 +288,9 @@ Note which Module the assert resides in when authoring the failure string.
 
 ##Additional Best Practices
 
-If you ever write `+N`, ask yourself if the number will ever be `NonPow2`. For example, wrap-around logic will be needed to guard incrementing pointers to queues with `NonPow` number of elements. Just like in software, overflows and array bounds overruns are scary!
+If you ever write `+N`, ask yourself if the number will ever be `NonPow2` (and then you should write a `require` statement if the logic depends on `Pow2` properties!). For example, wrap-around logic will be needed to guard incrementing pointers to queues with `NonPow2` number of elements. Just like in software, overflows and array bounds overruns are scary!
 
-**Avoid use of `var`**, as chisel lacks the defenses to safeguard its correct usage (Chisel nodes pointed to by `var` are invisible to `when()` statements). If you do use `var`, try to abstract it into a function/object. If you don’t understand why `var` and `when()` don’t mix, then for the love of god AVOID `var`.
+Avoid use of `var`. If you do use `var`, try to abstract it into a function/object. If you don’t understand why `var` and `when()` don’t mix, then for the love of god AVOID `var` (See Val versus Var section).
 
 If you solve a bug, strongly contemplate what `assert()` could have caught this bug and then add it.
 
