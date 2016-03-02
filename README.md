@@ -23,6 +23,7 @@ Feedback requested!
 * [Naming] (#naming)
 * [Bundles] (#bundles)
 * [Literals] (#literals)
+* [Parameters] (#parameters)
 * [Ready/Valid Interfaces] (#ready-valid-interfaces)
 * [Vector of Modules] (#vector-of-modules)
 * [Val versus Var] (#val-versus-var)
@@ -112,7 +113,19 @@ Consider breaking off Conditional I/O fields into a separate Bundles  (FreeListR
 
 Be careful of using Scala Ints to describe Chisel literals. `0xffffffff` is a 32-bit signed integer with value -1, and thus will throw an error when used as `UInt(0xffffffff, 32)`. Instead, use Strings to describe large literals:
 
+````scala
     UInt("hffffffff", 32)
+````
+
+## Parameters
+
+When instantiating an object from another package, explicitly name the arguments:
+
+````scala
+val s2d = Module(new hardfloat.RecFNToRecFN(inExpWidth = 8, inSigWidth = 24, outExpWidth = 11, outSigWidth = 53))
+````
+
+This safe-guards against the order (or the name) of parameters changing in an external package without your knowledge.
 
 ##Ready-Valid Interfaces
 
