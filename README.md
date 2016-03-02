@@ -7,11 +7,15 @@ A Style Guide for the [Chisel Hardware Construction Language](https://chisel.eec
 
 Code is meant to be read, not written. You will spend more time searching for bugs, adding features to existing code bases, and trying to learn what other people have done, than you will writing your own code from scratch.  Code should strive to be easy to understand and easy to maintain.
 
-As style can be such a deeply personal preference, and as Chisel continues to evolve, this guide will eschew making hard edicts on DOs and DONTs. Instead, this guide will strive to provide guidance to newcomers to Chisel through a discussion on best practices.
+As style can be a deeply personal preference, and because Chisel is still a very young language, this guide will eschew making hard edicts on DOs and DONTs. Instead, this guide will strive to provide guidance to newcomers to Chisel through a discussion on best practices.
 
 ## Prelude
 
 Chisel is a DSL embedded in Scala. However, it is still a distinct language, and so it may not follow all of Scala's conventions.
+
+For examples of Chisel style, I recommend reading the source code to the [Hwacha vector unit](https://github.com/ucb-bar/hwacha), the rocket-chip [uncore](https://github.com/ucb-bar/uncore), and the [BOOM out-of-order processor](https://github.com/ucb-bar/riscv-boom). Although they are all Berkeley-originated projects, each explores some very interesting (and different!) techniques to describing hardware generators.
+
+Feedback requested!
 
 ## Table of Contents
 
