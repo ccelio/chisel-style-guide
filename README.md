@@ -78,8 +78,8 @@ Or trait (if you want a Module or Bundle to extend the trait):
 Registers (and their type) should be specified as follows:
 
 ````scala
-Reg(UInt())              // good!
-Reg(UInt(width=8))       // also good!
+Reg(UInt())               // good!
+Reg(UInt(width=8))        // also good!
 
 Reg(io.my_signal.clone()) // good!
 ````
@@ -108,8 +108,8 @@ Delaying a Node (i.e., piping it into a register) should be performed as follows
 RegNext(io.my_signal)  // good
 Reg(next=io.my_signal) // okay
 
-Reg(io.my_signal)     // WRONG! Creates a Reg of the same type as io.a, 
-                      // and does NOT delay the node io.a with a register. 
+Reg(io.my_signal)      // WRONG! Creates a Reg of the same type as io.a, 
+                       // and does NOT delay the node io.a with a register. 
 ````
 
 ## Bundles
@@ -147,7 +147,11 @@ class TLBIO extends VMUBundle
   }                                                       
 ````
 
-Consider breaking off Conditional I/O fields into a separate Bundles  (FreeListRollbackIO and FreeListSingleCycleIO).
+The particular example is quite interesting - the `query` function provides a clearer interface to the user, it automatically sets up the request signals, *and* it provides a combinational return value to the caller!
+
+### Conditional I/O Fields
+
+Consider breaking off Conditional I/O fields into a separate Bundles (FreeListRollbackIO and FreeListSingleCycleIO).
 
 ## Literals
 
