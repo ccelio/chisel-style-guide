@@ -21,6 +21,7 @@ Feedback requested!
 
 * [Spacing] (#spacing)
 * [Naming] (#naming)
+* [Registers] (#registers)
 * [Bundles] (#bundles)
 * [Literals] (#literals)
 * [Parameters] (#parameters)
@@ -71,6 +72,45 @@ Or trait (if you want a Module or Bundle to extend the trait):
        val RD_LSB  = 7
     }
 ````
+
+## Registers
+
+Registers should be specified as follows:
+
+````scala
+Reg(UInt())        // good!
+Reg(UInt(width=8)) // also good!
+````
+
+This construct `Reg(x)` tells the Reg to be of type `x`. It does **NOT** tell Reg what initial value it should be!
+
+````scala
+Reg(UInt(0))    // bad!  Returns a Reg of type UInt and unknown width.
+Reg(UInt(0,15)) // bad!  Returns a Reg of type UInt with width 15. 
+````
+
+Registers should be initialized as follows:
+
+````scala
+Reg(init=UInt(0,15))  // good
+
+Reg(UInt(0,15))       // WRONG! This is exactly equivelant to Reg(UInt(width=15)),
+                      // and does NOT provide an initial value of UInt(0,15) to the Reg.
+````
+Wrapping a Node in Register should be performed as follows:
+
+````scala
+RegNext(io.a)        // good
+Reg(next=io.a)       // okay
+
+Reg(io.a)            // WRONG! Creates a Reg of the same type as io.a, 
+                     // and does NOT delay the node io.a with a register. 
+````
+
+### Width Inference
+
+While Chisel provides width inference, you should strive to provide widths to Registers anyways to prevent any surprises. 
+
 
 ## Bundles
 
