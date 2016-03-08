@@ -125,7 +125,7 @@ class DecoupledIO extends Bundle
   def fire(dummy: Int = 0): Bool = ready && valid     
   ....
 ````
-Users of the DecoupledIO can now do something like `when(io.deq.fire())`!
+Users of the DecoupledIO can now do something like `when(io.deq.fire())`!  (**note:** the `dummy: Int = 0` argument must be provided to functions with no arguments placed within Bundles, as Chisel is (currently) unable to differentiate between fields that are wires and fields that are functions with no arguments). 
 
 Or this example, which performs a `query` against a TLB address translation structure:
 
