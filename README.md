@@ -198,11 +198,15 @@ An ArrayBuffer should be used to describe a vector of Modules.
 
 One of the advantages is that you can provide different input parameters to each constructor (the above toy example shows different elements of `my_args` being provided to each `AluExeUnit`).
 
-The disadvantage is you cannot index the ArrayBuffer using Chisel nodes (aka, you can not dynamically index the ArrayBuffer during hardware execution).
+The disadvantage is you cannot index the ArrayBuffer using Chisel nodes (aka, you can not dynamically index the ArrayBuffer during hardware execution).  If you must use an ArrayBuffer (for the first advantage), you can still use dynamic indexing by grabbing a Vec of the IOs:
+
+````scala
+    val exe_units_io = Vec(exe_units.map(_.io))
+````
 
 ###Vec
 
-If you need to index the vector of Modules using a Chisel node use the following structure:
+If you need to index the vector of Modules using a Chisel node, you can also use the following structure:
 
 ````scala
     val table = Vec.fill(num_elements) {Module(new TableElement()).io}
