@@ -183,22 +183,23 @@ A valid signal **should not** depend on the ready signal (unless you really know
 
 ##Vector of Modules
 
-###ArrayBuffer
+### Static Indexing
 
-An ArrayBuffer should be used to describe a vector of Modules.
+An array of modules can be instantiated as follows:
 
 ````scala
-    val exe_units = ArrayBuffer[ExecutionUnit]()
     val my_args = Seq(1,2,3,4)
-    for (i <- 0 until num_units)
+    val exe_units = for (i <- 0 until num_units) yield
     {
-       exe_units += Module(new AluExeUnit(my_args(i)))
+       val exe_unit = Module(new AluExeUnit(args = my_args(i)))
+       // any wiring or other logic can go here
+       exe_unit
     }
 ````
 
-One of the advantages is that you can provide different input parameters to each constructor (the above toy example shows different elements of `my_args` being provided to each `AluExeUnit`).
+You can provide different input parameters to each constructor as required (the above toy example shows different elements of `my_args` being provided to each `AluExeUnit`).
 
-The disadvantage is you cannot index the ArrayBuffer using Chisel nodes (aka, you can not dynamically index the ArrayBuffer during hardware execution).  If you must use an ArrayBuffer (for the first advantage), you can still use dynamic indexing by grabbing a Vec of the IOs:
+The disadvantage is you cannot index the collection using Chisel nodes (aka, you can not dynamically index the collection during hardware execution).  If you must use a Scala collection (for the first advantage), you can still use dynamic indexing by grabbing a Vec of the IOs:
 
 ````scala
     val exe_units_io = Vec(exe_units.map(_.io))
