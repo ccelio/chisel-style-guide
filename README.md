@@ -354,6 +354,16 @@ Consider commenting the use of the I/O fields (especially if there are unintuiti
         val addr = UInt(width = ...)
         val cmd  = Bits(width = ...)
         val data = Bits(width = ...) // is sent the cycle after the request is valid
+     
+In fact, you may prefer to codify timings in the names of the signals themselves:
+
+    val io = new Bundle
+    {
+        // send read addr on cycle 0, get data out on cycle 2.
+        val s0_r_idx = UInt(INPUT, width = index_sz)
+        val s2_r_out = UInt(OUTPUT, width = fetch_width)
+           
+        
 
 If it required cleverness to write, you should probably describe **why** it does what it does. The reader is never as smart as the writer. Especially when it’s yourself.
 
@@ -385,4 +395,4 @@ Avoid use of `var`. If you do use `var`, try to abstract it into a function/obje
 
 If you solve a bug, strongly contemplate what `assert()` could have caught this bug and then add it.
 
-Considering restraining any undefined hardware behavior. It makes writing asserts easier.  Undefined behavior may provide for a more efficient circuit, but a circuit that works is even more efficient!
+Consider restraining any undefined hardware behavior. It makes writing asserts easier.  Undefined behavior may provide for a more efficient circuit, but a circuit that works is even more efficient!
