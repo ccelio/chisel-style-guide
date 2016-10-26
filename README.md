@@ -349,20 +349,22 @@ By default, all `val`s and `def`s are public in Scala. Label all `def`s private 
 
 Consider commenting the use of the I/O fields (especially if there are unintuitive timings!). Chisel I/Os aren’t functions - it isn’t obvious how to interface with a Module to other programmers.
 
-    class CpuReq extends Bundle
-    {
-        val addr = UInt(width = ...)
-        val cmd  = Bits(width = ...)
-        val data = Bits(width = ...) // is sent the cycle after the request is valid
+````scala
+class CpuReq extends Bundle
+{
+    val addr = UInt(width = ...)
+    val cmd  = Bits(width = ...)
+    val data = Bits(width = ...) // is sent the cycle after the request is valid
+````
      
 In fact, you may prefer to codify timings in the names of the signals themselves:
-
-    val io = new Bundle
-    {
-        // send read addr on cycle 0, get data out on cycle 2.
-        val s0_r_idx = UInt(INPUT, width = index_sz)
-        val s2_r_out = UInt(OUTPUT, width = fetch_width)
-           
+````scala
+val io = new Bundle
+{
+    // send read addr on cycle 0, get data out on cycle 2.
+    val s0_r_idx = UInt(INPUT, width = index_sz)
+    val s2_r_out = UInt(OUTPUT, width = fetch_width)
+````
         
 
 If it required cleverness to write, you should probably describe **why** it does what it does. The reader is never as smart as the writer. Especially when it’s yourself.
@@ -373,7 +375,9 @@ If you solve a bug, strongly contemplate what `assert()` could have caught this 
 
 If you are using a one-hot encoding, guard it with asserts! Especially calls to `OHToUInt`. 
 
-    assert(PopCount(updates_oh) <= UInt(1), "[MyModuleName] ...")
+````scala
+assert(PopCount(updates_oh) <= UInt(1), "[MyModuleName] ...")
+````
 
 Note which Module the assert resides in when authoring the failure string.
 
