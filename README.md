@@ -55,8 +55,7 @@ Constants/parameters should be named in all caps, demonstrating their global nat
 Constants should be all uppercase and should be put in a companion object:
 
 ````scala
-    object ALU 
-    {
+    object ALU {
       val SZ_ALU_FN = 4
       FN_ADD = UInt(0, SZ_ALU_FN)
       ...
@@ -66,8 +65,7 @@ Constants should be all uppercase and should be put in a companion object:
 Or trait (if you want a Module or Bundle to extend the trait):
 
 ````scala
-    trait RISCVConstants
-    {
+    trait RISCVConstants {
        val RD_MSB  = 11
        val RD_LSB  = 7
     }
@@ -118,8 +116,7 @@ Consider providing `def` functions in your Bundles. It provides a clearer level 
 
 ````scala
 // simplified example
-class DecoupledIO extends Bundle                 
-{                                                                    
+class DecoupledIO extends Bundle {
   val ready = Bool(INPUT)                                            
   val valid = Bool(OUTPUT)                                           
   def fire(dummy: Int = 0): Bool = ready && valid     
@@ -135,8 +132,7 @@ class TLBIO extends VMUBundle
   val req = Decoupled(new rocket.TLBReq)                  
   val resp = new rocket.TLBRespNoHitIndex().flip          
                                                           
-  def query(vpn: UInt, store: Bool): Bool = 
-  {             
+  def query(vpn: UInt, store: Bool): Bool = {
     this.req.bits.vpn := vpn                              
     this.req.bits.asid := UInt(0)                         
     this.req.bits.passthrough := Bool(false)              
@@ -189,8 +185,7 @@ An array of modules can be instantiated as follows:
 
 ````scala
     val my_args = Seq(1,2,3,4)
-    val exe_units = for (i <- 0 until num_units) yield
-    {
+    val exe_units = for (i <- 0 until num_units) yield {
        val exe_unit = Module(new AluExeUnit(args = my_args(i)))
        // any wiring or other logic can go here
        exe_unit
@@ -278,10 +273,8 @@ Consider the incorrect code below, which tries to mix `when`, `var`, and `=` to 
 ````Scala
    val my_bits = Wire(Bits(width=n))
    var temp = Bool(false)
-   for (i <- 0 until n)
-   {
-      when (my_bits(i))
-      {
+   for (i <- 0 until n) {
+      when (my_bits(i)) {
          temp = Bool(true) // wrong! always returns true.
          temp := Bool(true) // compiler error!
       }
@@ -314,8 +307,7 @@ Another use is forward declaring Modules that are conditionally instantiated lat
 
 ````scala
 var fpu: FPUUnit = null                   
-if (has_fpu)                                              
-{                                                         
+if (has_fpu) {                                                         
    fpu = Module(new FPUUnit()) 
    ...
 ````
@@ -350,8 +342,7 @@ By default, all `val`s and `def`s are public in Scala. Label all `def`s private 
 Consider commenting the use of the I/O fields (especially if there are unintuitive timings!). Chisel I/Os aren’t functions - it isn’t obvious how to interface with a Module to other programmers.
 
 ````scala
-class CpuReq extends Bundle
-{
+class CpuReq extends Bundle {
     val addr = UInt(width = ...)
     val cmd  = Bits(width = ...)
     val data = Bits(width = ...) // is sent the cycle after the request is valid
@@ -359,8 +350,7 @@ class CpuReq extends Bundle
      
 In fact, you may prefer to codify timings in the names of the signals themselves:
 ````scala
-val io = new Bundle
-{
+val io = new Bundle {
     // send read addr on cycle 0, get data out on cycle 2.
     val s0_r_idx = UInt(INPUT, width = index_sz)
     val s2_r_out = UInt(OUTPUT, width = fetch_width)
