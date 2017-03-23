@@ -19,21 +19,21 @@ Feedback requested!
 
 ## Table of Contents
 
-* [Spacing] (#spacing)
-* [Naming] (#naming)
-* [Registers] (#registers)
-* [Bundles] (#bundles)
-* [Literals] (#literals)
-* [Parameters] (#parameters)
-* [Ready/Valid Interfaces] (#ready-valid-interfaces)
-* [Vector of Modules] (#vector-of-modules)
-* [Val versus Var] (#val-versus-var)
-* [Private versus Public] (#private-versus-public)
-* [Imports] (#imports)
-* [Comments] (#comments)
-* [Assertions] (#assertions)
-* [Requires] (#requires)
-* [Additional Best Practices] (#additional-best-practices)
+* [Spacing](#spacing)
+* [Naming](#naming)
+* [Registers](#registers)
+* [Bundles](#bundles)
+* [Literals](#literals)
+* [Parameters](#parameters)
+* [Ready/Valid Interfaces](#ready-valid-interfaces)
+* [Vector of Modules](#vector-of-modules)
+* [Val versus Var](#val-versus-var)
+* [Private versus Public](#private-versus-public)
+* [Imports](#imports)
+* [Comments](#comments)
+* [Assertions](#assertions)
+* [Requires](#requires)
+* [Additional Best Practices](#additional-best-practices)
  
 ## Spacing
 
