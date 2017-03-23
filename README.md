@@ -167,7 +167,7 @@ val s2d = Module(new hardfloat.RecFNToRecFN(inExpWidth = 8, inSigWidth = 24, out
 
 This safe-guards against the order (or the name) of parameters changing in an external package without your knowledge.
 
-##Ready-Valid Interfaces
+## Ready-Valid Interfaces
 
 A ready signal denotes a resource is available/is ready to be utilized.
 
@@ -177,7 +177,7 @@ A valid signal denotes something is valid and *can* commit a state update (it *w
 
 A valid signal **should not** depend on the ready signal (unless you really know what you are doing). This hurts the critical path and can create combinational loops if both sides get coupled. 
 
-##Vector of Modules
+## Vector of Modules
 
 ### Static Indexing
 
@@ -200,7 +200,7 @@ The disadvantage is you cannot index the collection using Chisel nodes (aka, you
     val exe_units_io = Vec(exe_units.map(_.io))
 ````
 
-###Vec
+### Vec
 
 If you need to index the vector of Modules using a Chisel node, you can also use the following structure:
 
@@ -289,7 +289,7 @@ For the second statement `temp := Bool(true)`, a Chisel compiler error is thrown
 
 For completness sake, the proper code for an OR reduction would be `my_bits.orR` (and no need to use var or when!). 
 
-###Valid uses of Vars
+### Valid uses of Vars
 
 There are a few valid uses of var. One would be to generate cascading logic. For example, this locking arbiter from ChiselUtil:
 
@@ -312,7 +312,7 @@ if (has_fpu) {
    ...
 ````
 
-##Imports
+## Imports
 
 Try to avoid wildcard imports. They make code more obfuscated and fragile.
 
@@ -333,11 +333,11 @@ val tlb = Module(new TLB())
 val tlb = Module(new rocket.TLB())
 ````
 
-##Private versus Public
+## Private versus Public
 
 By default, all `val`s and `def`s are public in Scala. Label all `def`s private if the scope is meant to stay internal to the current object. This makes intention clearer.
 
-##Comments
+## Comments
 
 Consider commenting the use of the I/O fields (especially if there are unintuitive timings!). Chisel I/Os aren’t functions - it isn’t obvious how to interface with a Module to other programmers.
 
@@ -359,7 +359,7 @@ val io = new Bundle {
 
 If it required cleverness to write, you should probably describe **why** it does what it does. The reader is never as smart as the writer. Especially when it’s yourself.
 
-##Assertions
+## Assertions
 
 If you solve a bug, strongly contemplate what `assert()` could have caught this bug and then add it.
 
@@ -381,7 +381,7 @@ Use `require()` statements to codify your assumptions in your code (e.g., `requi
 
 
 
-##Additional Best Practices
+## Additional Best Practices
 
 If you ever write `+N`, ask yourself if the number will ever be `NonPow2` (and then you should write a `require` statement if the logic depends on `Pow2` properties!). For example, wrap-around logic will be needed to guard incrementing pointers to queues with `NonPow2` number of elements. Just like in software, overflows and array bounds overruns are scary!
 
