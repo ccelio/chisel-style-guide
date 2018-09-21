@@ -34,7 +34,7 @@ Feedback requested!
 * [Assertions](#assertions)
 * [Requires](#requires)
 * [Additional Best Practices](#additional-best-practices)
- 
+
 ## Spacing
 
 Spaces, not tabs. Never tabs.
@@ -77,7 +77,7 @@ Registers (and their type) should be specified as follows:
 
 ````scala
 Reg(UInt())               // good!
-Reg(UInt(width=8))        // also good!
+Reg(UInt(width=8.W))      // also good!
 
 Reg(io.my_signal.clone()) // good!
 ````
@@ -86,7 +86,7 @@ This construct `Reg(x)` tells the Reg to be of type `x`. It does **NOT** tell Re
 
 ````scala
 Reg(UInt(0))      // bad!  Returns a Reg of type UInt and unknown width.
-Reg(UInt(0,15))   // bad!  Returns a Reg of type UInt with width 15. 
+Reg(UInt(0,15))   // bad!  Returns a Reg of type UInt with width 15.
 
 Reg(io.my_signal) // bad. This makes a Reg of type io.my_signal, but the intention is not clear!
                   // It can be easily misread as Reg(next=io.my_signal).
@@ -95,7 +95,7 @@ Reg(io.my_signal) // bad. This makes a Reg of type io.my_signal, but the intenti
 Registers should be initialized as follows:
 
 ````scala
-Reg(init=UInt(0,15))  // good
+RegInit(UInt(0,15))   // good
 
 Reg(UInt(0,15))       // WRONG! This is exactly equivelant to Reg(UInt(width=15)),
                       // and does NOT provide an initial value of UInt(0,15) to the Reg.
@@ -106,8 +106,8 @@ Delaying a Node (i.e., piping it into a register) should be performed as follows
 RegNext(io.my_signal)  // good
 Reg(next=io.my_signal) // okay
 
-Reg(io.my_signal)      // WRONG! Creates a Reg of the same type as io.a, 
-                       // and does NOT delay the node io.a with a register. 
+Reg(io.my_signal)      // WRONG! Creates a Reg of the same type as io.a,
+                       // and does NOT delay the node io.a with a register.
 ````
 
 ## Bundles
@@ -117,30 +117,30 @@ Consider providing `def` functions in your Bundles. It provides a clearer level 
 ````scala
 // simplified example
 class DecoupledIO extends Bundle {
-  val ready = Bool(INPUT)                                            
-  val valid = Bool(OUTPUT)                                           
-  def fire(dummy: Int = 0): Bool = ready && valid     
+  val ready = Input(Bool())
+  val valid = Output(Bool())
+  def fire(dummy: Int = 0): Bool = ready && valid
   ....
 ````
-Users of the DecoupledIO can now do something like `when(io.deq.fire())`!  (**note:** the `dummy: Int = 0` argument must be provided to functions with no arguments placed within Bundles, as Chisel is (currently) unable to differentiate between fields that are wires and fields that are functions with no arguments). 
+Users of the DecoupledIO can now do something like `when(io.deq.fire())`!  (**note:** the `dummy: Int = 0` argument must be provided to functions with no arguments placed within Bundles, as Chisel is (currently) unable to differentiate between fields that are wires and fields that are functions with no arguments).
 
 Or this example, which performs a `query` against a TLB address translation structure:
 
 ````scala
-class TLBIO extends VMUBundle 
-{                           
-  val req = Decoupled(new rocket.TLBReq)                  
-  val resp = new rocket.TLBRespNoHitIndex().flip          
-                                                          
+class TLBIO extends VMUBundle
+{
+  val req = Decoupled(new rocket.TLBReq)
+  val resp = new rocket.TLBRespNoHitIndex().flip
+
   def query(vpn: UInt, store: Bool): Bool = {
-    this.req.bits.vpn := vpn                              
-    this.req.bits.asid := UInt(0)                         
-    this.req.bits.passthrough := Bool(false)              
-    this.req.bits.instruction := Bool(false)              
-    this.req.bits.store := store                          
-                                                          
-    this.req.ready && !this.resp.miss                     
-  }                                                       
+    this.req.bits.vpn := vpn
+    this.req.bits.asid := 0.U
+    this.req.bits.passthrough := false.B
+    this.req.bits.instruction := false.B
+    this.req.bits.store := store
+
+    this.req.ready && !this.resp.miss
+  }
 ````
 
 The particular example is quite interesting - the `query` function provides a clearer interface to the user, it automatically sets up the request signals, *and* it provides a combinational return value to the caller!
@@ -175,7 +175,7 @@ A valid signal denotes something is valid and *can* commit a state update (it *w
 
 **Performance tip:** a valid signal may often be a late arriving signal. Try to avoid using valid signals to drive datapath logic, and instead use valid signals to gate off state updates.
 
-A valid signal **should not** depend on the ready signal (unless you really know what you are doing). This hurts the critical path and can create combinational loops if both sides get coupled. 
+A valid signal **should not** depend on the ready signal (unless you really know what you are doing). This hurts the critical path and can create combinational loops if both sides get coupled.
 
 ## Vector of Modules
 
@@ -206,21 +206,21 @@ If you need to index the vector of Modules using a Chisel node, you can also use
 
 ````scala
     val table = Vec.fill(num_elements) {Module(new TableElement()).io}
-     
+
     val idx = Wire(UInt())
-    table(idx).wen := Bool(true) // indexed by a Chisel node!
+    table(idx).wen := true.B // indexed by a Chisel node!
 ````
 
-Note that `table` is actually a `Vec` of `TableElement` `I/O` bundles. 
+Note that `table` is actually a `Vec` of `TableElement` `I/O` bundles.
 
 
 ## Val versus Var
 
 Only use `val`, unless you are an experienced Chisel programmer. Even then, only use `var` in constrained situations (try to abstract it within a function). The use of the `var` can make it difficult to reason about your design.
 
-For context, a bit more background is needed. A hardware design described in Chisel is quite literally a Scala program that, when executed, generates a hardware graph composed of Chisel Nodes that is then passed to a back-end which generates a cycle-exact replica in either C++ or Verilog (or whatever other formats supported by the backend).  
+For context, a bit more background is needed. A hardware design described in Chisel is quite literally a Scala program that, when executed, generates a hardware graph composed of Chisel Nodes that is then passed to a back-end which generates a cycle-exact replica in either C++ or Verilog (or whatever other formats supported by the backend).
 
-Thus, `val` and `var` denote Scala variables (well more exactly, `val` is an immutable value and `var` is a mutable variable). 
+Thus, `val` and `var` denote Scala variables (well more exactly, `val` is an immutable value and `var` is a mutable variable).
 
 ````scala
     val my_node = Wire(UInt())
@@ -236,69 +236,69 @@ Uh oh. The Scala variable `node_ptr` is pointing to a Chisel node in the graph, 
 
 ````Scala
     var node_ptr = io.a
-    node_ptr := Bool(true)
+    node_ptr := true.B
     node_ptr = io.b
-    node_ptr := Bool(false)
+    node_ptr := false.B
 ````
 
-In the above (scary!) code, 
-* `node_ptr` first points to `io.a`, 
-* then uses the Chisel assignment operator `:=` to set `io.a` to `Bool(true)`
+In the above (scary!) code,
+* `node_ptr` first points to `io.a`,
+* then uses the Chisel assignment operator `:=` to set `io.a` to `true.B`
 * `node_ptr` is then changed to point to `io.b`
-* and finally, `io.b` is set to `Bool(false)`!
+* and finally, `io.b` is set to `false.B`!
 
 We get the following Verilog output:
 
 ````Verilog
-module Hello(         
-    output io_a,      
-    output io_b       
-);                    
-                      
-  assign io_b = 1'h0; 
-  assign io_a = 1'h1; 
-endmodule             
+module Hello(
+    output io_a,
+    output io_b
+);
+
+  assign io_b = 1'h0;
+  assign io_a = 1'h1;
+endmodule
 ````
 
 Using `var` can make it difficult to reason about the circuit. **And be CAREFUL when mixing `=` and `:=`**! The `=` is a Scala assignment, and sets a `var` variable to point to a new Node in the graph. Meanwhile, `:=` is a Chisel assignment and performs a new assignment *to* the Chisel Node. This distinction is important! For example, Chisel conditional `when` statements are for conditionally assigning values to Chisel Nodes - **the scala `=` operator is invisible to `when` statements!!**
 
 ````Scala
     var my_node = io.a
-    my_node := Bool(true) // this sets io.a to "true"
-    my_node = Bool(true)  // this sets the Scala variable my_node to point to a Chisel node that is a literal true
+    my_node := true.B // this sets io.a to "true"
+    my_node = true.B  // this sets the Scala variable my_node to point to a Chisel node that is a literal true
 ````
 
 Consider the incorrect code below, which tries to mix `when`, `var`, and `=` to perform an OR reduction:
 
 ````Scala
    val my_bits = Wire(Bits(width=n))
-   var temp = Bool(false)
+   var temp = false.B
    for (i <- 0 until n) {
       when (my_bits(i)) {
-         temp = Bool(true) // wrong! always returns true.
-         temp := Bool(true) // compiler error!
+         temp = true.B // wrong! always returns true.
+         temp := true.B // compiler error!
       }
    }
 ````
 
-For the first statement `temp = Bool(true)`, the Scala variable `temp` points to the Chisel node `Bool(true)`, ignoring the when() statement.
+For the first statement `temp = true.B`, the Scala variable `temp` points to the Chisel node `true.B`, ignoring the when() statement.
 
-For the second statement `temp := Bool(true)`, a Chisel compiler error is thrown because the code is trying to reassign the node `Bool(false)` to be `Bool(true)`, which is nonsensical. 
+For the second statement `temp := true.B`, a Chisel compiler error is thrown because the code is trying to reassign the node `false.B` to be `true.B`, which is nonsensical.
 
 **Conclusion: don't mix `when` and `var`'s!**
 
-For completness sake, the proper code for an OR reduction would be `my_bits.orR` (and no need to use var or when!). 
+For completness sake, the proper code for an OR reduction would be `my_bits.orR` (and no need to use var or when!).
 
 ### Valid uses of Vars
 
 There are a few valid uses of var. One would be to generate cascading logic. For example, this locking arbiter from ChiselUtil:
 
 ````Scala
-var choose = UInt(n-1)                         
-for (i <- n-2 to 0 by -1) {                    
-  choose = Mux(io.in(i).valid, UInt(i), choose)
-}                                              
-chosen := Mux(locked, lockIdx, choose)         
+var choose = (n-1).U
+for (i <- n-2 to 0 by -1) {
+  choose = Mux(io.in(i).valid, i.U, choose)
+}
+chosen := Mux(locked, lockIdx, choose)
 ````
 
 After each iteration of the Scala `for` loop, `choose` is pointing to a new node in the cascading Mux tree.
@@ -306,9 +306,9 @@ After each iteration of the Scala `for` loop, `choose` is pointing to a new node
 Another use is forward declaring Modules that are conditionally instantiated later.
 
 ````scala
-var fpu: FPUUnit = null                   
-if (has_fpu) {                                                         
-   fpu = Module(new FPUUnit()) 
+var fpu: FPUUnit = null
+if (has_fpu) {
+   fpu = Module(new FPUUnit())
    ...
 ````
 
@@ -344,18 +344,18 @@ Consider commenting the use of the I/O fields (especially if there are unintuiti
 ````scala
 class CpuReq extends Bundle {
     val addr = UInt(width = ...)
-    val cmd  = Bits(width = ...)
-    val data = Bits(width = ...) // is sent the cycle after the request is valid
+    val cmd  = UInt(width = ...)
+    val data = UInt(width = ...) // is sent the cycle after the request is valid
 ````
-     
+
 In fact, you may prefer to codify timings in the names of the signals themselves:
 ````scala
 val io = new Bundle {
     // send read addr on cycle 0, get data out on cycle 2.
-    val s0_r_idx = UInt(INPUT, width = index_sz)
-    val s2_r_out = UInt(OUTPUT, width = fetch_width)
+    val s0_r_idx = Input(UInt(width = index_sz.W))
+    val s2_r_out = Output(UInt(width = fetch_width.W))
 ````
-        
+
 
 If it required cleverness to write, you should probably describe **why** it does what it does. The reader is never as smart as the writer. Especially when it’s yourself.
 
@@ -363,10 +363,10 @@ If it required cleverness to write, you should probably describe **why** it does
 
 If you solve a bug, strongly contemplate what `assert()` could have caught this bug and then add it.
 
-If you are using a one-hot encoding, guard it with asserts! Especially calls to `OHToUInt`. 
+If you are using a one-hot encoding, guard it with asserts! Especially calls to `OHToUInt`.
 
 ````scala
-assert(PopCount(updates_oh) <= UInt(1), "[MyModuleName] ...")
+assert(PopCount(updates_oh) <= 1.U, "[MyModuleName] ...")
 ````
 
 Note which Module the assert resides in when authoring the failure string.
