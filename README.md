@@ -1,6 +1,6 @@
 # chisel-style-guide
 
-A Style Guide for the [Chisel Hardware Construction Language](https://chisel.eecs.berkeley.edu).
+A Style Guide for the [Chisel Hardware Construction Language](https://chisel-lang.org).
 
 
 ## Overall goal
@@ -77,9 +77,9 @@ Registers (and their type) should be specified as follows:
 
 ````scala
 Reg(UInt())               // good!
-Reg(UInt(width=8.W))      // also good!
+Reg(UInt(8.W))            // also good!
 
-Reg(io.my_signal.clone()) // good!
+Reg(chiselTypeOf(io.my_signal) // good!
 ````
 
 This construct `Reg(x)` tells the Reg to be of type `x`. It does **NOT** tell Reg what initial value it should be, nor does it add a `Delay` to a signal!
@@ -95,20 +95,22 @@ Reg(io.my_signal) // bad. This makes a Reg of type io.my_signal, but the intenti
 Registers should be initialized as follows:
 
 ````scala
-RegInit(UInt(0,15))   // good
+RegInit(0.U(15.W))   // good, initialized register to value 0 with width 15
 
-Reg(UInt(0,15))       // WRONG! This is exactly equivelant to Reg(UInt(width=15)),
-                      // and does NOT provide an initial value of UInt(0,15) to the Reg.
+Reg(0.U(15.W))       // WRONG! This will be an elaboration error
 ````
 Delaying a Node (i.e., piping it into a register) should be performed as follows:
 
 ````scala
 RegNext(io.my_signal)  // good
-Reg(next=io.my_signal) // okay
 
-Reg(io.my_signal)      // WRONG! Creates a Reg of the same type as io.a,
-                       // and does NOT delay the node io.a with a register.
+Reg(io.my_signal)      // WRONG! Creates a Reg of the same type as io.a, this will be an elaboration error
 ````
+
+And commit the following to memory. **It's `Reg` of `Vec`, not `Vec` of `Reg`**, for example
+```scala
+    val lotsOfRegs = RegInit(VecInit(10, UInt(32.W)))
+```
 
 ## Bundles
 
@@ -119,9 +121,11 @@ Consider providing `def` functions in your Bundles. It provides a clearer level 
 class DecoupledIO extends Bundle {
   val ready = Input(Bool())
   val valid = Output(Bool())
-  def fire(dummy: Int = 0): Bool = ready && valid
+  def fire: Bool = ready && valid
   ....
 ````
+> In some older chisel code you may see `def fire(dummy: Int = 0): Bool` the dummy argument is no longer necessary
+
 Users of the DecoupledIO can now do something like `when(io.deq.fire())`!  (**note:** the `dummy: Int = 0` argument must be provided to functions with no arguments placed within Bundles, as Chisel is (currently) unable to differentiate between fields that are wires and fields that are functions with no arguments).
 
 Or this example, which performs a `query` against a TLB address translation structure:
@@ -141,6 +145,7 @@ class TLBIO extends VMUBundle
 
     this.req.ready && !this.resp.miss
   }
+}
 ````
 
 The particular example is quite interesting - the `query` function provides a clearer interface to the user, it automatically sets up the request signals, *and* it provides a combinational return value to the caller!
@@ -271,7 +276,7 @@ Using `var` can make it difficult to reason about the circuit. **And be CAREFUL 
 Consider the incorrect code below, which tries to mix `when`, `var`, and `=` to perform an OR reduction:
 
 ````Scala
-   val my_bits = Wire(Bits(width=n))
+   val my_bits = Wire(UInt(n.W))
    var temp = false.B
    for (i <- 0 until n) {
       when (my_bits(i)) {
@@ -333,9 +338,23 @@ val tlb = Module(new TLB())
 val tlb = Module(new rocket.TLB())
 ````
 
+There are exceptions to this rule. It is usually best to use the wild card with chisel3, as in
+```
+import chisel3._
+``` 
+There are many useful things in chisel such as the support for the `.U` and `.S` constructs.
+It's easier to just make them all available, and it is likely that the import suggestion mechanism in an IDE will not
+suggest correctly.
+
+> Though you may see `import Chisel` with various endings in some examples (or sometimes suggested by an IDE),
+> we recommend that you not use it. 
+> Chisel with a capital 'C' is a backward compatibility mode for Chisel2,
+
 ## Private versus Public
 
-By default, all `val`s and `def`s are public in Scala. Label all `def`s private if the scope is meant to stay internal to the current object. This makes intention clearer.
+By default, all `val`s and `def`s are public in Scala.
+Label all `def`s private if the scope is meant to stay internal to the current object.
+This makes intention clearer.
 
 ## Comments
 
@@ -343,21 +362,23 @@ Consider commenting the use of the I/O fields (especially if there are unintuiti
 
 ````scala
 class CpuReq extends Bundle {
-    val addr = UInt(width = ...)
-    val cmd  = UInt(width = ...)
-    val data = UInt(width = ...) // is sent the cycle after the request is valid
+    val addr = UInt(someWidth.W)
+    val cmd  = UInt(someWidth.W)
+    val data = UInt(someWidth.W) // is sent the cycle after the request is valid
 ````
 
 In fact, you may prefer to codify timings in the names of the signals themselves:
 ````scala
 val io = new Bundle {
     // send read addr on cycle 0, get data out on cycle 2.
-    val s0_r_idx = Input(UInt(width = index_sz.W))
-    val s2_r_out = Output(UInt(width = fetch_width.W))
+    val s0_r_idx = Input(UInt(index_sz.W))
+    val s2_r_out = Output(UInt(fetch_width.W))
 ````
 
 
-If it required cleverness to write, you should probably describe **why** it does what it does. The reader is never as smart as the writer. Especially when it’s yourself.
+If your code required cleverness to write, you should probably describe **why** it does what it does.
+The reader is never as smart as the writer.
+Especially when it’s yourself.
 
 ## Assertions
 
